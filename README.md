@@ -52,13 +52,14 @@ The components are bundled into standalone assets that the MCP servers serve as 
 pnpm run build
 ```
 
-This command runs `build-all.mts`, producing versioned `.html`, `.js`, and `.css` files inside `assets/`. Each widget is wrapped with the CSS it needs so you can host the bundles directly or ship them with your own server.
+This command first builds the Module Federation remote in `remote-pizza-list` and then runs `build-all.mts`, producing versioned `.html`, `.js`, and `.css` files inside `assets/`. Each widget is wrapped with the CSS it needs so you can host the bundles directly or ship them with your own server.
 
 To iterate on your components locally, you can also launch the Vite dev server:
 
 ```bash
 pnpm run dev
 ```
+
 
 ## Serve the static assets
 
@@ -68,7 +69,7 @@ If you want to preview the generated bundles without the MCP servers, start the 
 pnpm run serve
 ```
 
-The assets are exposed at [`http://localhost:4444`](http://localhost:4444) with CORS enabled so that local tooling (including MCP inspectors) can fetch them.
+This command concurrently runs the Module Federation remote (`remote-pizza-list`) on [`http://localhost:3002`](http://localhost:3002) and serves the built gallery at [`http://localhost:4444`](http://localhost:4444) with CORS enabled so that local tooling (including MCP inspectors) can fetch the assets. Stop the script with `Ctrl+C` to terminate both servers.
 
 ## Run the MCP servers
 
@@ -128,7 +129,7 @@ You can add your app to the conversation context by selecting it in the "More" o
 
 ![more-chatgpt](https://github.com/user-attachments/assets/26852b36-7f9e-4f48-a515-aebd87173399)
 
-You can then invoke tools by asking something related. For example, for the Pizzaz app, you can ask "What are the best pizzas in town?".
+You can then invoke tools by asking something related. For example, for the Pizzaz app, you can ask "Show me the pizza list".
 
 ## Next steps
 

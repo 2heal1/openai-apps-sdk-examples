@@ -110,7 +110,7 @@ for (const file of entries) {
       outDir,
       emptyOutDir: false,
       chunkSizeWarningLimit: 2000,
-      minify: "esbuild",
+      minify:false,
       cssCodeSplit: false,
       rollupOptions: {
         input: virtualId,
@@ -149,15 +149,15 @@ const h = crypto
   .slice(0, 4);
 
 console.group("Hashing outputs");
-for (const out of outputs) {
-  const dir = path.dirname(out);
-  const ext = path.extname(out);
-  const base = path.basename(out, ext);
-  const newName = path.join(dir, `${base}-${h}${ext}`);
+// for (const out of outputs) {
+//   const dir = path.dirname(out);
+//   const ext = path.extname(out);
+//   const base = path.basename(out, ext);
+//   const newName = path.join(dir, `${base}-${h}${ext}`);
 
-  fs.renameSync(out, newName);
-  console.log(`${out} -> ${newName}`);
-}
+//   fs.renameSync(out, newName);
+//   console.log(`${out} -> ${newName}`);
+// }
 console.groupEnd();
 
 console.log("new hash: ", h);
