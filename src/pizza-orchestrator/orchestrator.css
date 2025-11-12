@@ -1,0 +1,66 @@
+.orchestrator-root {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  padding: 16px;
+  font-family: system-ui, sans-serif;
+  color: #111;
+}
+.request-banner {
+  display: inline-flex;
+  gap: 8px;
+  align-items: baseline;
+  background: rgba(244, 108, 33, 0.12);
+  color: #aa3d11;
+  padding: 8px 12px;
+  border-radius: 12px;
+  font-size: 14px;
+}
+.request-banner span {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  font-size: 12px;
+}
+.request-banner strong {
+  font-weight: 600;
+  font-size: 14px;
+}
+.component-grid {
+  display: grid;
+  gap: 16px;
+}
+@media (min-width: 768px) {
+  .component-grid {
+    grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+  }
+}
+.component-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  border-radius: 16px;
+  background: white;
+  border: 1px solid rgba(17, 17, 17, 0.08);
+  box-shadow: 0 4px 16px rgba(17, 17, 17, 0.05);
+  min-height: 200px;
+}
+.component-header h3 {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+}
+.component-description {
+  margin: 4px 0 0;
+  font-size: 14px;
+  color: rgba(17, 17, 17, 0.6);
+}
+.remote-fallback {
+  padding: 24px;
+  border-radius: 16px;
+  border: 1px dashed rgba(17, 17, 17, 0.2);
+  text-align: center;
+  color: rgba(17, 17, 17, 0.6);
+  font-size: 14px;
+}

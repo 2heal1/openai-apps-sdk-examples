@@ -1,6 +1,7 @@
 import React from "react";
 import { createRoot } from "react-dom/client";
-import { createInstance } from '@module-federation/runtime'
+import { createInstance } from "@module-federation/runtime";
+import { useWidgetProps } from "../use-widget-props";
 
 const mf = createInstance({
   name: 'host',
@@ -27,11 +28,17 @@ const mf = createInstance({
 
 
 function App() {
+  const widgetProps = useWidgetProps(() => ({
+    pizzaTopping: "Mozzarella",
+    headline: "Fresh pies incoming!",
+  }));
   const Remote = React.lazy(() => mf.loadRemote('provider'));
   return (
     <div>
-      <React.Suspense>
-        <Remote />
+      <h2>{widgetProps?.headline}</h2>
+      <p>Favorite topping: {widgetProps?.pizzaTopping}</p>
+      <React.Suspense fallback={<div>Loading remote list…</div>}>
+        <Remote {...widgetProps} />
       </React.Suspense>
     </div>
   );

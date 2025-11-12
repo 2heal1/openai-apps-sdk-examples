@@ -36,6 +36,17 @@ type PizzazWidget = {
   responseText: string;
 };
 
+type RemoteComponent = {
+  id: string;
+  title: string;
+  description: string;
+  remoteName: string;
+  remoteEntry: string;
+  exposedModule: string;
+  defaultProps: Record<string, unknown>;
+  keywords: string[];
+};
+
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const ROOT_DIR = path.resolve(__dirname, "..", "..");
 const ASSETS_DIR = path.resolve(ROOT_DIR, "assets");
@@ -84,44 +95,72 @@ function widgetMeta(widget: PizzazWidget) {
   } as const;
 }
 
-const widgets: PizzazWidget[] = [
+const orchestratorWidget: PizzazWidget = {
+  id: "pizza-orchestrator",
+  title: "Compose Pizza Experience",
+  templateUri: "ui://widget/pizza-orchestrator.html",
+  invoking: "Assembling pizza extras",
+  invoked: "Served custom pizza experience",
+  html: readWidgetHtml("pizza-orchestrator"),
+  responseText: "Composed the requested pizza experience.",
+};
+
+const remoteComponents: RemoteComponent[] = [
   {
-    id: "pizza-map",
-    title: "Show Pizza Map",
-    templateUri: "ui://widget/pizza-map.html",
-    invoking: "Hand-tossing a map",
-    invoked: "Served a fresh map",
-    html: readWidgetHtml("pizzaz"),
-    responseText: "Rendered a pizza map!",
+    id: "pizza-list",
+    title: "Pizza List",
+    description: "Ranking of the best pizzerias.",
+    remoteName: "provider",
+    remoteEntry: "http://127.0.0.1:3002/mf-manifest.json",
+    exposedModule: ".",
+    defaultProps: {
+      headline: "Today’s featured pizza list",
+      pizzaTopping: "Margherita",
+    },
+    keywords: ["pizza list", "list", "ranking", "restaurants", "best pizzas"],
   },
   {
     id: "pizza-carousel",
-    title: "Show Pizza Carousel",
-    templateUri: "ui://widget/pizza-carousel.html",
-    invoking: "Carousel some spots",
-    invoked: "Served a fresh carousel",
-    html: readWidgetHtml("pizzaz-carousel"),
-    responseText: "Rendered a pizza carousel!",
+    title: "Pizza Carousel",
+    description: "Horizontal carousel of top pizza spots.",
+    remoteName: "pizzazCarouselProvider",
+    remoteEntry: "http://127.0.0.1:3003/mf-manifest.json",
+    exposedModule: ".",
+    defaultProps: {
+      title: "Carousel highlights",
+      ctaLabel: "Save Picks",
+    },
+    keywords: ["carousel", "slider", "scroll", "swipe"],
+  },
+  {
+    id: "pizza-map",
+    title: "Pizza Map",
+    description: "Interactive map showing pizza spots.",
+    remoteName: "pizzazMapProvider",
+    remoteEntry: "http://127.0.0.1:3004/mf-manifest.json",
+    exposedModule: ".",
+    defaultProps: {
+      headline: "Pizza spots map",
+      description: "Explore locations near you.",
+    },
+    keywords: ["map", "location", "where", "nearby", "route"],
   },
   {
     id: "pizza-albums",
-    title: "Show Pizza Album",
-    templateUri: "ui://widget/pizza-albums.html",
-    invoking: "Hand-tossing an album",
-    invoked: "Served a fresh album",
-    html: readWidgetHtml("pizzaz-albums"),
-    responseText: "Rendered a pizza album!",
-  },
-  {
-    id: "pizza-list",
-    title: "Show Pizza List",
-    templateUri: "ui://widget/pizza-list.html",
-    invoking: "Hand-tossing a list",
-    invoked: "Served a fresh list",
-    html: readWidgetHtml("pizzaz-list"),
-    responseText: "Rendered a pizza list!",
+    title: "Pizza Albums",
+    description: "Photo albums of pizza adventures.",
+    remoteName: "pizzazAlbumsProvider",
+    remoteEntry: "http://127.0.0.1:3005/mf-manifest.json",
+    exposedModule: ".",
+    defaultProps: {
+      headline: "Pizza albums",
+      ctaLabel: "View album",
+    },
+    keywords: ["album", "gallery", "photos", "pictures"],
   },
 ];
+
+const widgets: PizzazWidget[] = [orchestratorWidget];
 
 const widgetsById = new Map<string, PizzazWidget>();
 const widgetsByUri = new Map<string, PizzazWidget>();
@@ -134,48 +173,86 @@ widgets.forEach((widget) => {
 const toolInputSchema = {
   type: "object",
   properties: {
-    pizzaTopping: {
+    request: {
       type: "string",
-      description: "Topping to mention when rendering the widget.",
+      description:
+        'Natural language description of which pizza components to show. Example: "show me the pizza list and the pizza carousel".',
     },
   },
-  required: ["pizzaTopping"],
+  required: ["request"],
   additionalProperties: false,
 } as const;
 
 const toolInputParser = z.object({
-  pizzaTopping: z.string(),
+  request: z.string().min(1),
 });
 
-const tools: Tool[] = widgets.map((widget) => ({
-  name: widget.id,
-  description: widget.title,
-  inputSchema: toolInputSchema,
-  title: widget.title,
-  _meta: widgetMeta(widget),
-  // To disable the approval prompt for the widgets
-  annotations: {
-    destructiveHint: false,
-    openWorldHint: false,
-    readOnlyHint: true,
+function normalizeText(value: string): string {
+  return value.trim().toLowerCase();
+}
+
+function resolveComponentsFromRequest(request: string) {
+  const normalized = normalizeText(request);
+  const matched = new Map<string, RemoteComponent>();
+  const keywordHits: Array<{ componentId: string; keyword: string }> = [];
+
+  for (const component of remoteComponents) {
+    for (const keyword of component.keywords) {
+      if (normalized.includes(keyword)) {
+        matched.set(component.id, component);
+        keywordHits.push({ componentId: component.id, keyword });
+      }
+    }
+  }
+
+  if (matched.size === 0) {
+    const defaultComponent = remoteComponents.find((c) => c.id === "pizza-list");
+    if (defaultComponent) {
+      matched.set(defaultComponent.id, defaultComponent);
+    }
+  }
+
+  return {
+    components: Array.from(matched.values()),
+    keywordHits,
+  };
+}
+
+const tools: Tool[] = [
+  {
+    name: orchestratorWidget.id,
+    description:
+      "Compose a pizza experience using combinations of pizza list, carousel, map, or albums.",
+    inputSchema: toolInputSchema,
+    title: orchestratorWidget.title,
+    _meta: widgetMeta(orchestratorWidget),
+    annotations: {
+      destructiveHint: false,
+      openWorldHint: false,
+      readOnlyHint: true,
+    },
   },
-}));
+];
 
-const resources: Resource[] = widgets.map((widget) => ({
-  uri: widget.templateUri,
-  name: widget.title,
-  description: `${widget.title} widget markup`,
-  mimeType: "text/html+skybridge",
-  _meta: widgetMeta(widget),
-}));
+const resources: Resource[] = [
+  {
+    uri: orchestratorWidget.templateUri,
+    name: orchestratorWidget.title,
+    description: `${orchestratorWidget.title} widget markup`,
+    mimeType: "text/html+skybridge",
+    _meta: widgetMeta(orchestratorWidget),
+  },
+];
 
-const resourceTemplates: ResourceTemplate[] = widgets.map((widget) => ({
-  uriTemplate: widget.templateUri,
-  name: widget.title,
-  description: `${widget.title} widget markup`,
-  mimeType: "text/html+skybridge",
-  _meta: widgetMeta(widget),
-}));
+const resourceTemplates: ResourceTemplate[] = [
+  {
+    uriTemplate: orchestratorWidget.templateUri,
+    name: orchestratorWidget.title,
+    description: `${orchestratorWidget.title} widget markup`,
+    mimeType: "text/html+skybridge",
+    _meta: widgetMeta(orchestratorWidget),
+  },
+];
 
 function createPizzazServer(): Server {
   const server = new Server(
@@ -244,6 +321,32 @@ function createPizzazServer(): Server {
       }
 
       const args = toolInputParser.parse(request.params.arguments ?? {});
+      const { components, keywordHits } = resolveComponentsFromRequest(
+        args.request
+      );
+
+      const structuredContent = {
+        request: args.request,
+        components: components.map((component) => ({
+          id: component.id,
+          title: component.title,
+          description: component.description,
+          remoteName: component.remoteName,
+          remoteEntry: component.remoteEntry,
+          exposedModule: component.exposedModule,
+          props: component.defaultProps,
+        })),
+        matchedKeywords: keywordHits,
+        availableComponents: remoteComponents.map((component) => ({
+          id: component.id,
+          title: component.title,
+          description: component.description,
+          remoteName: component.remoteName,
+          remoteEntry: component.remoteEntry,
+          exposedModule: component.exposedModule,
+        })),
+        resolvedAt: new Date().toISOString(),
+      };
 
       return {
         content: [
@@ -252,9 +355,7 @@ function createPizzazServer(): Server {
             text: widget.responseText,
           },
         ],
-        structuredContent: {
-          pizzaTopping: args.pizzaTopping,
-        },
+        structuredContent,
         _meta: widgetMeta(widget),
       };
     }

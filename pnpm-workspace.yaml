@@ -1,3 +1,7 @@
 packages:
   - pizzaz_server_node
   - remote-pizza-list
+  - remote-pizzaz-carousel
+  - remote-pizzaz-map
+  - remote-pizzaz-albums
+  - remote-pizzaz-map
