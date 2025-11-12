@@ -129,7 +129,7 @@ You can add your app to the conversation context by selecting it in the "More" o
 
 ![more-chatgpt](https://github.com/user-attachments/assets/26852b36-7f9e-4f48-a515-aebd87173399)
 
-You can then invoke tools by asking something related. For example, for the Pizzaz app, you can ask "Show me the pizza list".
+You can then invoke tools by asking something related. For example, for the Pizzaz app, you can ask **"show me the pizza list and the pizza carousel"**.
 
 ## Next steps
 
